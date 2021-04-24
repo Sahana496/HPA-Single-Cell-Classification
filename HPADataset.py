@@ -34,6 +34,7 @@ class HPADataset(object):
         
         # load images and masks
         img = self.load_RGBY_image(self.img_dir, self.imgs[idx])
+        img = cv2.resize(img, dsize=(512, 512), interpolation=cv2.INTER_CUBIC)
         img = Image.fromarray(np.uint8(img)).convert('RGB')
         
         masks, obj_ids = self.load_mask(self.imgs[idx])
@@ -112,6 +113,7 @@ class HPADataset(object):
         masks = []
         class_ids = []
         cell_mask = np.load(f'{self.mask_dir}/{image_id}.npz')['arr_0']
+        cell_mask = cv2.resize(cell_mask, dsize=(512, 512), interpolation=cv2.INTER_NEAREST)
 
         #find number of cells in the image
         mask_ids = np.unique(cell_mask)

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#SBATCH --job-name=maskrcnn
+#SBATCH --job-name=maskrcnn1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=30GB
 #SBATCH --gres=gpu:1
-#SBATCH --time=08:00:00
+#SBATCH --time=12:00:00
 
 module purge
 
@@ -22,7 +22,7 @@ singularity exec $nv \
 	    /scratch/work/public/singularity/cuda11.0-cudnn8-devel-ubuntu18.04.sif \
 	    /bin/bash -c "
 	    source /ext3/env.sh
-	    python mask-rcnn.py
+	    python -u mask-rcnn.py --pretrained --checkpoint-dir checkpoints/resized_imgs
 	    "
 
 
