@@ -13,7 +13,7 @@ def get_config():
     cfg.SOLVER.IMS_PER_BATCH = 16
     cfg.SOLVER.BASE_LR = 0.00025
     cfg.SOLVER.WARMUP_ITERS = 1000
-    cfg.SOLVER.MAX_ITER = 300000 #adjust up if val mAP is still rising, adjust down if overfit
+    cfg.SOLVER.MAX_ITER = 30000 #adjust up if val mAP is still rising, adjust down if overfit
     cfg.SOLVER.STEPS = ()
 
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128
