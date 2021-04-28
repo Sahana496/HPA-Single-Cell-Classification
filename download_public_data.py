@@ -5,7 +5,7 @@ import pathlib
 import gzip
 import imageio
 import pandas as pd
-
+from multiprocessing import Pool, cpu_count
 
 def tif_gzip_to_png(tif_path):
     '''Function to convert .tif.gz to .png and put it in the same folder
@@ -16,15 +16,21 @@ def tif_gzip_to_png(tif_path):
     img = imageio.imread(tf, 'tiff')
     imageio.imwrite(png_path, img)
     
-def download_and_convert_tifgzip_to_png(url, target_path):    
+def download_and_convert_tifgzip_to_png(paths):    
     '''Function to convert .tif.gz to .png and put it in the same folder
     Eg. in Kaggle notebook
     '''
-    r = requests.get(url)
-    f = io.BytesIO(r.content)
-    tf = gzip.open(f).read()
-    img = imageio.imread(tf, 'tiff')
-    imageio.imwrite(target_path, img)
+    try:
+        url,target_path = paths
+        r = requests.get(url)
+        print(len(r.content))
+        f = io.BytesIO(r.content)
+        tf = gzip.open(f).read()
+        img = imageio.imread(tf, 'tiff')
+        imageio.imwrite(target_path, img)
+        print(f'Downloaded: {url} as {target_path}')  
+    except:
+        print(f'Failed: {url}')
     
 # All label names in the public HPA and their corresponding index. 
 all_locations = dict({
@@ -97,22 +103,26 @@ public_hpa_to_download = public_hpa_df_17[public_hpa_df_17['Label_idx'].isin(to_
 print(len(public_hpa_to_download))
 unique = public_hpa_to_download['Image'].unique()
 
-save_dir = os.path.join('../data','train')
+save_dir = os.path.join('../data','public_hpa')
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
     
-num = 1
-for i, img in enumerate(unique):
-    try:            
-        for color in colors:
-            img_url = f'{img}_{color}.tif.gz'
-            save_path = os.path.join(save_dir,  f'{os.path.basename(img)}_{color}.png')
-            download_and_convert_tifgzip_to_png(img_url, save_path)
-            print(f'Downloaded {num} : {img_url} as {save_path}')   
-        num+=1
-    except:
-        print(f'failed to download: {img}')
-        
+download_files = []
+
+for i, img in enumerate(unique):       
+    for color in colors:
+        img_url = f'{img}_{color}.tif.gz'
+        save_path = os.path.join(save_dir,  f'{os.path.basename(img)}_{color}.png')
+        download_files.append((img_url,save_path))  
+
+#print("There are {} CPUs on this machine ".format(cpu_count()))
+pool = Pool(2)
+
+results = pool.imap(download_and_convert_tifgzip_to_png, download_files)
+pool.close()
+pool.join()
+
+
 public_hpa_train = public_hpa_17_copy[public_hpa_17_copy['Image'].isin(unique)]
 public_hpa_train['ID'] = public_hpa_train['Image'].apply(lambda x: os.path.basename(x))
 public_hpa_train = public_hpa_train.drop(columns=['Image', 'Label', 'Cellline','in_trainset'], axis=1)
