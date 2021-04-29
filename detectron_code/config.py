@@ -1,6 +1,7 @@
 from detectron2.config import get_cfg
 from detectron2 import model_zoo
 import torch
+import os
 
 def get_config(train_metadata):
     cfg = get_cfg()
