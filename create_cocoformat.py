@@ -18,6 +18,8 @@ import json
 from pycocotools import mask
 from skimage import measure
 from multiprocessing import Pool, cpu_count
+import functools
+import operator
 
 inpath = "../data/train/"  # the train folder download from kaggle
 outpath = "../data/train_out/"  # the folder putting all nuclei image
@@ -148,10 +150,13 @@ pool.close()
 pool.join()
 
 cocoformat['images'] = images
-cocoformat['annotations']=annotations
+cocoformat['annotations']= functools.reduce(operator.iconcat, annotations, [])
+for i,d in enumerate(cocoformat['annotations']):
+    d.update({'id': int(i+1)})
+print(len(cocoformat['annotations']))
 print("Number of images: ", len(images))
                          
-with open("./data/hpa_cocoformat_train_all.json", "w") as f:
+with open("./data/hpa_train.json", "w") as f:
     json.dump(cocoformat, f)
 
 
