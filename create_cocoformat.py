@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import json
 from pycocotools import mask
 from skimage import measure
-
+from multiprocessing import Pool, cpu_count
 
 inpath = "../data/train/"  # the train folder download from kaggle
 outpath = "../data/train_out/"  # the folder putting all nuclei image
@@ -86,16 +86,18 @@ for i, c in enumerate(classes):
           }
     cocoformat["categories"].append(cat)
     
-mask_id = 1
-df = pd.read_csv('./data/train_split.csv')
 
-image_ids = list(df['ID']) 
+df = pd.read_csv('./data/train_all_split.csv')
 
+image_ids = list(df['ID'])
+idx = list(range(0,len(image_ids)))
 
 #image class
 classes = df['Label'].values
-
-for i, img_id in enumerate(image_ids):
+def create_annotations(imgs):
+    mask_id = 1
+    i, img_id = imgs
+    annotations = []
     print("Processing Image {}:{} ".format(i, img_id))
     image = load_RGBY_image(inpath, img_id, image_size=512)
     masks, obj_ids = load_mask(img_id, image_size=512)
@@ -107,7 +109,7 @@ for i, img_id in enumerate(image_ids):
           "file_name": img_id
          }
     
-    cocoformat["images"].append(im)
+#     cocoformat["images"].append(im)
     
     num_objs = len(obj_ids)
     for j in range(num_objs):
@@ -135,9 +137,21 @@ for i, img_id in enumerate(image_ids):
             annotation["segmentation"].append(segmentation)
             
         mask_id = mask_id+1
-        cocoformat["annotations"].append(annotation)
+        annotations.append(annotation)
+        
+    return (im, annotations)
 
-with open("./data/hpa_cocoformat_train.json", "w") as f:
+pool = Pool(cpu_count())
+arguments = list(zip(idx,image_ids))
+images, annotations = zip(*pool.map(create_annotations, arguments))
+pool.close()
+pool.join()
+
+cocoformat['images'] = images
+cocoformat['annotations']=annotations
+print("Number of images: ", len(images))
+                         
+with open("./data/hpa_cocoformat_train_all.json", "w") as f:
     json.dump(cocoformat, f)
 
 

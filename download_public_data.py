@@ -91,7 +91,7 @@ colors = ['blue', 'red', 'green', 'yellow']
 celllines = ['A-431', 'A549', 'EFO-21', 'HAP1', 'HEK 293', 'HUVEC TERT2', 'HaCaT', 'HeLa', 'PC-3', 'RH-30', 'RPTEC TERT1', 'SH-SY5Y', 'SK-MEL-30', 'SiHa', 'U-2 OS', 'U-251 MG', 'hTCEpi']
 public_hpa_df_17 = public_hpa_df[public_hpa_df.Cellline.isin(celllines)]
 print(len(public_hpa_df), len(public_hpa_df_17))
-public_hpa_17_copy = public_hpa_df_17
+public_hpa_17_copy = public_hpa_df_17.copy(deep = True)
 
 to_download = ['8', '6', '10', '9', '1', '15', '11']
 
