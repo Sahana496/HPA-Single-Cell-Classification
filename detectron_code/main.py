@@ -17,20 +17,16 @@ from config import *
 setup_logger()
 
 data_dir = "../../data/train"
-register_coco_instances("hpa_train_final", {}, "../data/hpa_cocoformat_train.json", data_dir)
-register_coco_instances("hpa_val_final", {}, "../data/hpa_cocoformat_val.json", data_dir)
-register_coco_instances("hpa_test_final", {}, "../data/hpa_cocoformat_test.json",  data_dir)
+register_coco_instances("hpa_train", {}, "../data/hpa_train.json", data_dir)
+register_coco_instances("hpa_val", {}, "../data/hpa_val.json", data_dir)
 
-train_metadata = MetadataCatalog.get("hpa_train_final")
-dataset_dicts_train = DatasetCatalog.get("hpa_train_final")
+train_metadata = MetadataCatalog.get("hpa_train")
+dataset_dicts_train = DatasetCatalog.get("hpa_train")
 
-val_metadata = MetadataCatalog.get("hpa_val_final")
-dataset_dicts_val = DatasetCatalog.get("hpa_val_final")
+val_metadata = MetadataCatalog.get("hpa_val")
+dataset_dicts_val = DatasetCatalog.get("hpa_val")
 
-test_metadata = MetadataCatalog.get("hpa_test_final")
-dataset_dicts_test = DatasetCatalog.get("hpa_test_final")
-
-cfg = get_config()
+cfg = get_config(train_metadata)
 
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 trainer = Trainer(cfg) 
