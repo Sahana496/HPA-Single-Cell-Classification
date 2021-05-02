@@ -8,34 +8,34 @@ import functools
 import operator
 
 class HPADataset(object):
-    def __init__(self, root, transforms=None):
+    def __init__(self, root, csv, transforms=None):
         self.img_dir = os.path.join(root, 'train')
         self.mask_dir = os.path.join(root, 'hpa_cell_mask')
         self.transforms = transforms
         
-        self.df = pd.read_csv(root+'/train.csv')
+        self.df = pd.read_csv(csv)
         
         #dropping this image since it has no masks
         self.df.drop(self.df[self.df['ID']=='940f418a-bba4-11e8-b2b9-ac1f6b6435d0'].index, inplace = True)  
         
         #Split labels
-        self.df["Label"] = self.df["Label"].str.split("|")
+#         self.df["Label"] = self.df["Label"].str.split("|")
         
-        #fetch only images that have one label
-        self.df["Label Count"] = self.df['Label'].str.len()
-        self.df = self.df[self.df['Label Count'] == 1]
+#         #fetch only images that have one label
+#         self.df["Label Count"] = self.df['Label'].str.len()
+#         self.df = self.df[self.df['Label Count'] == 1]
         self.imgs = list(self.df['ID'])  
         
         #image class
-        self.classes = functools.reduce(operator.iconcat, self.df['Label'].values, [])
+        self.classes = self.df['Label'].values #functools.reduce(operator.iconcat, self.df['Label'].values, [])
 
     
     def __getitem__(self, idx):
         
         # load images and masks
-        img = self.load_RGBY_image(self.img_dir, self.imgs[idx])
-        img = cv2.resize(img, dsize=(512, 512), interpolation=cv2.INTER_CUBIC)
-        img = Image.fromarray(np.uint8(img)).convert('RGB')
+        img = self.load_RGBY_image(self.img_dir, self.imgs[idx], image_size=512)
+#         img = cv2.resize(img, dsize=(512, 512), interpolation=cv2.INTER_CUBIC)
+        img = Image.fromarray(np.uint8(img))
         
         masks, obj_ids = self.load_mask(self.imgs[idx])
      
@@ -88,9 +88,8 @@ class HPADataset(object):
         img = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
         if image_size is not None:
             img = cv2.resize(img, (image_size, image_size))
-        if img.max() > 255:
-            img_max = img.max()
-            img = (img/255).astype('uint8')
+        if img.dtype == 'uint16':
+            img = (img/256).astype('uint8')
         return img
 
     # image loader, using rgb only here
@@ -114,10 +113,9 @@ class HPADataset(object):
         class_ids = []
         cell_mask = np.load(f'{self.mask_dir}/{image_id}.npz')['arr_0']
         cell_mask = cv2.resize(cell_mask, dsize=(512, 512), interpolation=cv2.INTER_NEAREST)
-
         #find number of cells in the image
         mask_ids = np.unique(cell_mask)
-        
+#         print(mask_ids)
         #Remove background
         mask_ids = mask_ids[1:]
         
