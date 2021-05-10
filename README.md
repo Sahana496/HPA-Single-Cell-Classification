@@ -24,10 +24,10 @@ ResNet101 and ResNeXt101 with Feature Pyramid Network was implemented using the 
 Densenet121 was implemented using Torchvision library from PyTorch.
 
 ## Running code
-To train MaskRCNN with Densenet121 backbone, run-model.sbatch batchfile must be submitted (after updating the path to your Singularity container).
-To train MaskRCNN with ResNet101-FPN and ResNeXt101-FPN backbone, detectron_code/run-model.sbatch batchfile must be submitted (after updating the path to your Singularity container).
-The notebook **Densenet-Eval.ipynb** contains the code for visualizing the output predictions from MaskRCNN with a DenseNet121 backbone.
-The notebook **detectron_code/Resnext101-Eval.ipynb** contains the code for visualizing the output predictions from MaskRCNN with a ResNeXt121-FPN backbone.
+- To train MaskRCNN with Densenet121 backbone, run-model.sbatch batchfile must be submitted (after updating the path to your Singularity container).    
+- To train MaskRCNN with ResNet101-FPN and ResNeXt101-FPN backbone, detectron_code/run-model.sbatch batchfile must be submitted (after updating the path to your Singularity container).   
+- The notebook **Densenet-Eval.ipynb** contains the code for visualizing the output predictions from MaskRCNN with a DenseNet121 backbone.
+- The notebook **detectron_code/Resnext101-Eval.ipynb** contains the code for visualizing the output predictions from MaskRCNN with a ResNeXt121-FPN backbone.
 
 
 
