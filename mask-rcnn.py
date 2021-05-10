@@ -9,7 +9,7 @@ import functools
 import operator
 import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
+from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor, MaskRCNN
 from utils.engine import train_one_epoch, evaluate
 import utils.utils
 import utils.transforms as T
@@ -17,7 +17,20 @@ from HPADataset import HPADataset
 import time
 import torch.nn as nn
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
-from torchvision.models.detection.mask_rcnn import MaskRCNN
+import torchvision.models._utils
+from torchvision.models.detection.anchor_utils import AnchorGenerator
+
+def get_densenet_maskrcnn(num_classes):
+    backbone = torchvision.models.densenet121(pretrained = True)
+    modules=list(backbone.children())[:-1]
+    backbone=torch.nn.Sequential(*modules)
+    backbone.out_channels=1024
+    
+    anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512),),
+                                       aspect_ratios=((0.5, 1.0, 2.0),))
+    model = MaskRCNN(backbone, num_classes=num_classes, rpn_anchor_generator=anchor_generator)
+    
+    return model
 
 def _validate_trainable_layers(pretrained, trainable_backbone_layers, max_value, default_value):
     # dont freeze any layers if pretrained model or backbone is not used
@@ -70,7 +83,11 @@ def get_transform(train):
         # during training, randomly flip the training images
         # and ground-truth for data augmentation
         transforms.append(T.RandomHorizontalFlip(0.5))
-    return T.Compose(transforms) 
+        transforms.append(T.Normalize())
+    else:
+        transforms.append(T.Normalize())
+        
+    return T.Compose(transforms)
     
 def main(args):
 
@@ -84,8 +101,8 @@ def main(args):
     # use our dataset and defined transformations
     ROOT = args.data_path
     ROOT = '../data'
-    dataset_train = HPADataset(ROOT,csv='./data/train_all_split.csv', transforms=get_transform(train=True))
-    dataset_val = HPADataset(ROOT,csv='./data/val_all_split.csv', transforms=get_transform(train=False))
+    dataset_train = HPADataset(ROOT,csv='./data/train_val_single.csv', transforms=get_transform(train=True))
+    dataset_val = HPADataset(ROOT,csv='./data/test_split.csv', transforms=get_transform(train=False))
 
     # split the dataset in train and validation set
     torch.manual_seed(1)
@@ -102,8 +119,14 @@ def main(args):
         collate_fn=utils.utils.collate_fn)
 
     print("Creating model")
-    model = get_instance_segmentation_model(num_classes, args.model)
-
+    if args.model == 'resnet101' or args.model == 'resnet50':
+        model = get_instance_segmentation_model(num_classes, args.model)
+    elif args.model == 'densenet':
+        model = get_densenet_maskrcnn(num_classes)
+    else:
+        print("Invalid model")
+        exit()
+    
     model.to(device)
 
     model_without_ddp = model
@@ -112,8 +135,8 @@ def main(args):
     optimizer = torch.optim.SGD(
         params, lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
 
-    # lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step_size, gamma=args.lr_gamma)
-    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.lr_steps, gamma=args.lr_gamma)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step_size, gamma=args.lr_gamma)
+#     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.lr_steps, gamma=args.lr_gamma)
 
     if args.resume:
         checkpoint = torch.load(args.resume, map_location='cpu')
@@ -164,7 +187,7 @@ if __name__ == "__main__":
     parser.add_argument('--wd', '--weight-decay', default=1e-4, type=float,
                         metavar='W', help='weight decay (default: 1e-4)',
                         dest='weight_decay')
-    parser.add_argument('--lr-step-size', default=2, type=int, help='decrease lr every step-size epochs')
+    parser.add_argument('--lr-step-size', default=3, type=int, help='decrease lr every step-size epochs')
     parser.add_argument('--lr-steps', default=[2, 5, 7], nargs='+', type=int, help='decrease lr every step-size epochs')
     parser.add_argument('--lr-gamma', default=0.1, type=float, help='decrease lr by a factor of lr-gamma')
     parser.add_argument('--print-freq', default=20, type=int, help='print frequency')

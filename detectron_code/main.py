@@ -17,14 +17,15 @@ from config import *
 setup_logger()
 
 data_dir = "../../data/train"
-register_coco_instances("hpa_train", {}, "../data/hpa_train.json", data_dir)
-register_coco_instances("hpa_val", {}, "../data/hpa_val.json", data_dir)
+register_coco_instances("hpa_train", {}, "../data/train_val_single_coco.json", data_dir)
+register_coco_instances("hpa_test", {}, "../data/test_coco.json", data_dir)
+classes = ['Nucleoplasm', 'Nuclear membrane', 'Nucleoli', 'Nucleoli fibrillar center',
+            'Nuclear speckles', 'Nuclear bodies', 'Endoplasmic reticulum', 'Golgi apparatus', 'Intermediate filaments','Actin filaments', 'Microtubules', 'Mitotic spindle', 'Centrosome', 'Plasma membrane', 'Mitochondria',
+            'Aggresome', 'Cytosol', 'Vesicles and punctate cytosolic patterns', 'Negative']
 
-train_metadata = MetadataCatalog.get("hpa_train")
-dataset_dicts_train = DatasetCatalog.get("hpa_train")
+train_metadata = MetadataCatalog.get("hpa_train").set(thing_classes=classes)
 
-val_metadata = MetadataCatalog.get("hpa_val")
-dataset_dicts_val = DatasetCatalog.get("hpa_val")
+val_metadata = MetadataCatalog.get("hpa_test").set(thing_classes=classes)
 
 cfg = get_config(train_metadata)
 
